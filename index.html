@@ -49,17 +49,18 @@
   }
   .tab {
     flex: 1;
-    padding: 12px 0;
+    padding: 12px 2px;
     text-align: center;
     background: var(--panel);
     border: 1px solid var(--line);
-    border-radius: var(--radius) var(--radius) 0 0;
+    border-radius: 10px 10px 0 0;
     border-bottom: none;
     color: var(--muted);
-    font-size: .95rem;
+    font-size: .8rem;
     font-weight: 600;
     cursor: pointer;
     user-select: none;
+    white-space: nowrap;
   }
   .tab.active { background: var(--panel2); color: var(--accent); }
 
@@ -181,7 +182,7 @@
     gap: 6px;
     margin-bottom: 16px;
   }
-  .roots button, .quals button {
+  .roots button, .quals button, .capo-row button, .pat-list button, .beats-select button {
     padding: 10px 4px;
     background: var(--panel);
     border: 1px solid var(--line);
@@ -191,7 +192,7 @@
     font-weight: 600;
     cursor: pointer;
   }
-  .roots button.sel, .quals button.sel {
+  .roots button.sel, .quals button.sel, .capo-row button.sel, .pat-list button.sel, .beats-select button.sel {
     background: var(--accent);
     border-color: var(--accent);
     color: #1a1408;
@@ -244,6 +245,66 @@
   }
   .play-btn:active { background: rgba(245,166,35,.15); }
   .empty-msg { color: var(--muted); font-size: .9rem; padding: 20px 0; text-align: center; }
+
+  /* ---------- capo ---------- */
+  .capo-row {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .capo-row button { font-size: .8rem; padding: 9px 2px; }
+  .capo-info { color: var(--good); font-size: .85rem; font-weight: 600; width: 100%; }
+
+  /* ---------- metronome ---------- */
+  .bpm-display { text-align: center; margin: 4px 0 8px; }
+  .bpm-display .v { font-size: 3.4rem; font-weight: 800; line-height: 1; }
+  .bpm-display .u { color: var(--muted); font-size: .9rem; margin-left: 6px; }
+  .bpm-slider { width: 100%; margin: 10px 0 4px; accent-color: var(--accent); }
+  .bpm-controls { display: flex; gap: 8px; justify-content: center; margin: 8px 0 4px; }
+  .bpm-controls button {
+    flex: 1; max-width: 80px; padding: 10px 0;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    color: var(--text); font-size: .9rem; font-weight: 700; cursor: pointer;
+  }
+  .bpm-controls button:active { background: var(--panel2); }
+  .beats-select { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; }
+  .beat-dots { display: flex; gap: 12px; justify-content: center; margin: 18px 0; min-height: 26px; }
+  .beat-dot {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--panel); border: 1px solid var(--line);
+    transition: transform .05s, background .05s;
+  }
+  .beat-dot.first { border-color: var(--accent-dim); }
+  .beat-dot.on { background: var(--accent); transform: scale(1.35); }
+  .beat-dot.first.on { background: var(--good); }
+  .tap-btn {
+    display: block; margin: 12px auto 0; padding: 10px 26px;
+    background: transparent; color: var(--accent);
+    border: 1px solid var(--accent-dim); border-radius: 999px;
+    font-size: .85rem; font-weight: 700; cursor: pointer;
+  }
+  .tap-btn:active { background: rgba(245,166,35,.15); }
+
+  /* ---------- strumming ---------- */
+  .pat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 16px; }
+  .pat-list button { font-size: .78rem; padding: 10px 4px; }
+  .strum-grid {
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px;
+    margin: 6px 0 14px;
+  }
+  .strum-cell {
+    text-align: center; padding: 7px 0 9px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  }
+  .strum-cell .beat { font-size: .65rem; color: var(--muted); display: block; }
+  .strum-cell .arrow { font-size: 1.25rem; font-weight: 800; display: block; margin-top: 2px; line-height: 1.2; }
+  .strum-cell .arrow.down { color: var(--accent); }
+  .strum-cell .arrow.up { color: #6fb7ff; }
+  .strum-cell .arrow.rest { color: var(--line); }
+  .strum-cell.now { background: rgba(245,166,35,.2); border-color: var(--accent); }
+  .strum-info { text-align: center; color: var(--muted); font-size: .85rem; margin-bottom: 12px; }
+  .strum-info b { color: var(--accent); font-size: 1.05rem; }
 </style>
 </head>
 <body>
@@ -254,8 +315,10 @@
 </header>
 
 <div class="tabs">
-  <div class="tab active" id="tabTuner">チューナー</div>
-  <div class="tab" id="tabChords">コード検索</div>
+  <div class="tab active" data-page="pageTuner">チューナー</div>
+  <div class="tab" data-page="pageChords">コード</div>
+  <div class="tab" data-page="pageMetro">メトロノーム</div>
+  <div class="tab" data-page="pageStrum">ストローク</div>
 </div>
 
 <main>
@@ -296,9 +359,13 @@
     <div class="picker-label">コードタイプ</div>
     <div class="quals" id="qualBtns"></div>
 
+    <div class="picker-label">カポの位置</div>
+    <div class="capo-row" id="capoBtns"></div>
+
     <div class="chord-header">
       <span class="name" id="chordName"></span>
       <span class="notes-in" id="chordNotes"></span>
+      <span class="capo-info" id="capoInfo"></span>
     </div>
     <div class="voicings" id="voicings"></div>
 
@@ -306,6 +373,55 @@
       💡 ダイアグラムの見方：縦線が弦（左が6弦・低いミ）、横線がフレット。
       ●が押さえる場所、○は開放弦（押さえずに鳴らす）、×は鳴らさない弦。
       左端の数字はフレット位置（表示がなければ1フレットから）。「♪ 鳴らす」で実際の響きを確認できます。
+      カポを付けている場合、ダイアグラムはカポを1フレット目とみなして押さえ、音はカポの分だけ高く鳴ります。
+    </p>
+  </section>
+
+  <!-- ================= METRONOME ================= -->
+  <section class="page" id="pageMetro">
+    <div class="bpm-display"><span class="v" id="bpmVal">100</span><span class="u">BPM</span></div>
+    <input type="range" class="bpm-slider" id="bpmSlider" min="40" max="240" value="100">
+    <div class="bpm-controls">
+      <button data-d="-10">−10</button>
+      <button data-d="-1">−1</button>
+      <button data-d="1">＋1</button>
+      <button data-d="10">＋10</button>
+    </div>
+
+    <div class="picker-label">拍子</div>
+    <div class="beats-select" id="beatsBtns"></div>
+
+    <div class="beat-dots" id="beatDots"></div>
+
+    <button class="big-btn" id="metroToggle">▶ スタート</button>
+    <button class="tap-btn" id="tapBtn">👆 タップでテンポ設定</button>
+
+    <p class="hint">
+      💡 1拍目は緑色・高い音で鳴ります。「タップでテンポ設定」を曲に合わせて数回タップすると、
+      その速さが自動で BPM に設定されます。
+    </p>
+  </section>
+
+  <!-- ================= STRUMMING ================= -->
+  <section class="page" id="pageStrum">
+    <div class="picker-label">ストロークパターン</div>
+    <div class="pat-list" id="patBtns"></div>
+
+    <div class="strum-grid" id="strumGrid"></div>
+
+    <div class="strum-info">
+      コード: <b id="strumChordName">C</b>（「コード」タブで変更）
+    </div>
+
+    <div class="bpm-display"><span class="v" id="strumBpmVal">80</span><span class="u">BPM</span></div>
+    <input type="range" class="bpm-slider" id="strumBpmSlider" min="40" max="180" value="80">
+
+    <button class="big-btn" id="strumToggle">▶ スタート</button>
+
+    <p class="hint">
+      💡 ↓はダウンストローク（上から下へ振り下ろす）、↑はアップストローク（下から上へ）、・は空振り
+      （腕は止めずに空中で振る）です。光っているマスに合わせてストロークしましょう。
+      まずは遅い BPM から始めて、慣れたら少しずつ速くするのが上達のコツです。
     </p>
   </section>
 </main>
@@ -367,19 +483,12 @@ function pluck(freq, when = 0, dur = 1.6, gainVal = 0.22) {
 /* ==============================
    タブ切り替え
 ============================== */
-const tabTuner = document.getElementById("tabTuner");
-const tabChords = document.getElementById("tabChords");
-const pageTuner = document.getElementById("pageTuner");
-const pageChords = document.getElementById("pageChords");
-function showTab(which) {
-  const tunerOn = which === "tuner";
-  tabTuner.classList.toggle("active", tunerOn);
-  tabChords.classList.toggle("active", !tunerOn);
-  pageTuner.classList.toggle("active", tunerOn);
-  pageChords.classList.toggle("active", !tunerOn);
-}
-tabTuner.onclick = () => showTab("tuner");
-tabChords.onclick = () => showTab("chords");
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t === tab));
+    document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === tab.dataset.page));
+  };
+});
 
 /* ==============================
    チューナー
@@ -621,9 +730,18 @@ const OPEN_CHORDS = {
 
 let selRoot = 0;   // C
 let selQual = 0;   // メジャー
+let capoFret = 0;  // カポ位置（0 = なし）
 
 const rootBtnsEl = document.getElementById("rootBtns");
 const qualBtnsEl = document.getElementById("qualBtns");
+const capoBtnsEl = document.getElementById("capoBtns");
+
+for (let c = 0; c <= 7; c++) {
+  const b = document.createElement("button");
+  b.textContent = c === 0 ? "なし" : String(c);
+  b.onclick = () => { capoFret = c; renderPickers(); renderChord(); };
+  capoBtnsEl.appendChild(b);
+}
 
 NOTE_NAMES.forEach((n, i) => {
   const b = document.createElement("button");
@@ -641,6 +759,7 @@ QUALITIES.forEach((q, i) => {
 function renderPickers() {
   [...rootBtnsEl.children].forEach((b, i) => b.classList.toggle("sel", i === selRoot));
   [...qualBtnsEl.children].forEach((b, i) => b.classList.toggle("sel", i === selQual));
+  [...capoBtnsEl.children].forEach((b, i) => b.classList.toggle("sel", i === capoFret));
 }
 
 /* 指定コードのボイシング（押さえ方）一覧を作る */
@@ -737,13 +856,13 @@ function drawDiagram(frets) {
   return s;
 }
 
-/* 押さえ方どおりの音でストローク再生 */
+/* 押さえ方どおりの音でストローク再生（カポの分だけ高く鳴る） */
 function strum(frets) {
   getAudioCtx();
   let delay = 0;
   frets.forEach((v, i) => {
     if (v < 0) return;
-    const freq = midiToFreq(GUITAR_STRINGS[i].midi + v);
+    const freq = midiToFreq(GUITAR_STRINGS[i].midi + v + capoFret);
     pluck(freq, delay, 2.4, 0.16);
     delay += 0.055;
   });
@@ -755,6 +874,17 @@ function renderChord() {
   document.getElementById("chordName").textContent = name || NOTE_NAMES[selRoot];
   const tones = q.intervals.map(iv => NOTE_NAMES[(selRoot + iv) % 12]);
   document.getElementById("chordNotes").textContent = "構成音: " + [...new Set(tones)].join("・");
+
+  const capoInfo = document.getElementById("capoInfo");
+  if (capoFret > 0) {
+    const actual = NOTE_NAMES[(selRoot + capoFret) % 12] + q.key;
+    capoInfo.textContent = `🎯 カポ${capoFret}フレット → 実際の響きは「${actual}」`;
+  } else {
+    capoInfo.textContent = "";
+  }
+  // ストローク練習タブのコード表示も更新
+  const sc = document.getElementById("strumChordName");
+  if (sc) sc.textContent = name || NOTE_NAMES[selRoot];
 
   const wrap = document.getElementById("voicings");
   wrap.innerHTML = "";
@@ -778,6 +908,247 @@ function renderChord() {
 
 renderPickers();
 renderChord();
+
+/* ==============================
+   クリック音（メトロノーム／ストローク共通）
+============================== */
+function clickSound(time, freq, gainVal) {
+  const ctx = getAudioCtx();
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = "square";
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(gainVal, time);
+  g.gain.exponentialRampToValueAtTime(0.0001, time + 0.05);
+  o.connect(g);
+  g.connect(ctx.destination);
+  o.start(time);
+  o.stop(time + 0.06);
+}
+
+/* ==============================
+   メトロノーム
+   （少し先までスケジュールしておく方式でテンポのズレを防ぐ）
+============================== */
+const metro = { on: false, bpm: 100, beats: 4, next: 0, count: 0, timer: null, queue: [] };
+
+const bpmVal = document.getElementById("bpmVal");
+const bpmSlider = document.getElementById("bpmSlider");
+const metroToggle = document.getElementById("metroToggle");
+const beatDotsEl = document.getElementById("beatDots");
+const beatsBtnsEl = document.getElementById("beatsBtns");
+
+const BEAT_CHOICES = [
+  { beats: 2, label: "2/4" },
+  { beats: 3, label: "3/4" },
+  { beats: 4, label: "4/4" },
+  { beats: 6, label: "6/8" },
+];
+BEAT_CHOICES.forEach((c, i) => {
+  const b = document.createElement("button");
+  b.textContent = c.label;
+  b.classList.toggle("sel", c.beats === metro.beats);
+  b.onclick = () => {
+    metro.beats = c.beats;
+    metro.count = 0;
+    [...beatsBtnsEl.children].forEach((x, j) => x.classList.toggle("sel", j === i));
+    buildBeatDots();
+  };
+  beatsBtnsEl.appendChild(b);
+});
+
+function buildBeatDots() {
+  beatDotsEl.innerHTML = "";
+  for (let i = 0; i < metro.beats; i++) {
+    const d = document.createElement("div");
+    d.className = "beat-dot" + (i === 0 ? " first" : "");
+    beatDotsEl.appendChild(d);
+  }
+}
+buildBeatDots();
+
+function setBpm(v) {
+  metro.bpm = Math.max(40, Math.min(240, Math.round(v)));
+  bpmVal.textContent = metro.bpm;
+  bpmSlider.value = metro.bpm;
+}
+bpmSlider.oninput = () => setBpm(+bpmSlider.value);
+document.querySelectorAll(".bpm-controls button").forEach(b => {
+  b.onclick = () => setBpm(metro.bpm + Number(b.dataset.d));
+});
+
+function metroSchedule() {
+  const ctx = getAudioCtx();
+  while (metro.next < ctx.currentTime + 0.12) {
+    const accent = metro.count === 0;
+    clickSound(metro.next, accent ? 1568 : 1047, accent ? 0.3 : 0.16);
+    metro.queue.push({ t: metro.next, beat: metro.count });
+    metro.count = (metro.count + 1) % metro.beats;
+    metro.next += 60 / metro.bpm;
+  }
+}
+
+function metroDraw() {
+  if (!metro.on) return;
+  requestAnimationFrame(metroDraw);
+  const now = audioCtx ? audioCtx.currentTime : 0;
+  let cur = -1;
+  while (metro.queue.length && metro.queue[0].t <= now) cur = metro.queue.shift().beat;
+  if (cur >= 0) {
+    [...beatDotsEl.children].forEach((d, i) => d.classList.toggle("on", i === cur));
+  }
+}
+
+metroToggle.onclick = () => {
+  if (metro.on) {
+    metro.on = false;
+    clearInterval(metro.timer);
+    metro.queue = [];
+    metroToggle.textContent = "▶ スタート";
+    metroToggle.classList.remove("stop");
+    [...beatDotsEl.children].forEach(d => d.classList.remove("on"));
+    return;
+  }
+  const ctx = getAudioCtx();
+  metro.on = true;
+  metro.count = 0;
+  metro.next = ctx.currentTime + 0.1;
+  metro.queue = [];
+  metro.timer = setInterval(metroSchedule, 25);
+  metroToggle.textContent = "■ ストップ";
+  metroToggle.classList.add("stop");
+  metroDraw();
+};
+
+/* タップテンポ */
+let taps = [];
+document.getElementById("tapBtn").onclick = () => {
+  const now = performance.now();
+  taps = taps.filter(t => now - t < 3000);
+  taps.push(now);
+  if (taps.length >= 2) {
+    const diffs = [];
+    for (let i = 1; i < taps.length; i++) diffs.push(taps[i] - taps[i - 1]);
+    const avg = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+    setBpm(60000 / avg);
+  }
+};
+
+/* ==============================
+   ストローク練習
+============================== */
+const STRUM_PATTERNS = [
+  { name: "① 4分ダウン（基礎）",      slots: ["D", null, "D", null, "D", null, "D", null] },
+  { name: "② 8分ダウンアップ",        slots: ["D", "U", "D", "U", "D", "U", "D", "U"] },
+  { name: "③ 定番パターン",           slots: ["D", null, "D", "U", null, "U", "D", "U"] },
+  { name: "④ ロック8ビート",          slots: ["D", null, "D", "U", "D", null, "D", "U"] },
+  { name: "⑤ バラード",               slots: ["D", null, null, "U", null, "U", null, null] },
+];
+const BEAT_LABELS = ["1", "&", "2", "&", "3", "&", "4", "&"];
+
+let selPat = 0;
+const strumSt = { on: false, bpm: 80, next: 0, slot: 0, timer: null, queue: [] };
+
+const patBtnsEl = document.getElementById("patBtns");
+const strumGridEl = document.getElementById("strumGrid");
+const strumToggle = document.getElementById("strumToggle");
+const strumBpmVal = document.getElementById("strumBpmVal");
+const strumBpmSlider = document.getElementById("strumBpmSlider");
+
+STRUM_PATTERNS.forEach((p, i) => {
+  const b = document.createElement("button");
+  b.textContent = p.name;
+  b.classList.toggle("sel", i === 0);
+  b.onclick = () => {
+    selPat = i;
+    strumSt.slot = 0;
+    [...patBtnsEl.children].forEach((x, j) => x.classList.toggle("sel", j === i));
+    buildStrumGrid();
+  };
+  patBtnsEl.appendChild(b);
+});
+
+function buildStrumGrid() {
+  strumGridEl.innerHTML = "";
+  STRUM_PATTERNS[selPat].slots.forEach((s, i) => {
+    const cell = document.createElement("div");
+    cell.className = "strum-cell";
+    const arrow = s === "D" ? '<span class="arrow down">↓</span>'
+                : s === "U" ? '<span class="arrow up">↑</span>'
+                : '<span class="arrow rest">・</span>';
+    cell.innerHTML = `<span class="beat">${BEAT_LABELS[i]}</span>${arrow}`;
+    strumGridEl.appendChild(cell);
+  });
+}
+buildStrumGrid();
+
+strumBpmSlider.oninput = () => {
+  strumSt.bpm = +strumBpmSlider.value;
+  strumBpmVal.textContent = strumSt.bpm;
+};
+
+/* いま選ばれているコードでダウン／アップストロークを鳴らす */
+function strumHit(dir, time) {
+  const v = buildVoicings(selRoot, QUALITIES[selQual])[0];
+  if (!v) return;
+  const ctx = getAudioCtx();
+  const sounding = [];
+  v.frets.forEach((f, i) => { if (f >= 0) sounding.push(i); });
+  // ダウンは全弦を低い方から、アップは高い方の4本だけを高い方から
+  const order = dir === "D" ? sounding : sounding.slice(-4).reverse();
+  const base = Math.max(0, time - ctx.currentTime);
+  order.forEach((strIdx, k) => {
+    const freq = midiToFreq(GUITAR_STRINGS[strIdx].midi + v.frets[strIdx] + capoFret);
+    pluck(freq, base + k * 0.013, dir === "D" ? 0.9 : 0.6, dir === "D" ? 0.13 : 0.09);
+  });
+}
+
+function strumSchedule() {
+  const ctx = getAudioCtx();
+  const slotDur = 60 / strumSt.bpm / 2; // 8分音符1つ分
+  while (strumSt.next < ctx.currentTime + 0.15) {
+    const s = STRUM_PATTERNS[selPat].slots[strumSt.slot];
+    if (strumSt.slot % 2 === 0) {
+      clickSound(strumSt.next, strumSt.slot === 0 ? 1568 : 1047, strumSt.slot === 0 ? 0.12 : 0.06);
+    }
+    if (s) strumHit(s, strumSt.next);
+    strumSt.queue.push({ t: strumSt.next, slot: strumSt.slot });
+    strumSt.slot = (strumSt.slot + 1) % 8;
+    strumSt.next += slotDur;
+  }
+}
+
+function strumDraw() {
+  if (!strumSt.on) return;
+  requestAnimationFrame(strumDraw);
+  const now = audioCtx ? audioCtx.currentTime : 0;
+  let cur = -1;
+  while (strumSt.queue.length && strumSt.queue[0].t <= now) cur = strumSt.queue.shift().slot;
+  if (cur >= 0) {
+    [...strumGridEl.children].forEach((c, i) => c.classList.toggle("now", i === cur));
+  }
+}
+
+strumToggle.onclick = () => {
+  if (strumSt.on) {
+    strumSt.on = false;
+    clearInterval(strumSt.timer);
+    strumSt.queue = [];
+    strumToggle.textContent = "▶ スタート";
+    strumToggle.classList.remove("stop");
+    [...strumGridEl.children].forEach(c => c.classList.remove("now"));
+    return;
+  }
+  const ctx = getAudioCtx();
+  strumSt.on = true;
+  strumSt.slot = 0;
+  strumSt.next = ctx.currentTime + 0.1;
+  strumSt.queue = [];
+  strumSt.timer = setInterval(strumSchedule, 25);
+  strumToggle.textContent = "■ ストップ";
+  strumToggle.classList.add("stop");
+  strumDraw();
+};
 </script>
 </body>
 </html>
