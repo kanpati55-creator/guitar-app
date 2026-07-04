@@ -1,0 +1,13 @@
+{
+  "name": "ギターの相棒",
+  "short_name": "ギターの相棒",
+  "description": "アコギのチューニングとコードの押さえ方をすぐに確認",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#12151c",
+  "theme_color": "#12151c",
+  "icons": [
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
